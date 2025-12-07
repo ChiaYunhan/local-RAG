@@ -1,2 +1,2 @@
-# local-RAG
-local full stack dockerize RAG made with python and React
+# local-Summarizer
+local full stack dockerize summarizer that takes in English/Malay documents and outputs abstractive and extractive summaries. 
