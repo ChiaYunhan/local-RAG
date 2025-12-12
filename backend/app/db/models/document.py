@@ -16,7 +16,8 @@ class Document(Base):
         default=DocumentStatus.IN_PROGRESS,
         index=True,
     )
-    filepath = Column(String(200))
+    raw_filepath = Column(String(200))
+    markdown_filepath = Column(String(200))
     created_at = Column(Date, index=True)
     updated_at = Column(Date, index=True)
 

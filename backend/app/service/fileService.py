@@ -43,7 +43,7 @@ class FileService:
 
         # Sanitize filename and add UUID to prevent collisions
         safe_filename = self._sanitize_filename(file.filename or "unnamed_file")
-        unique_filename = f"{uuid.uuid4()}_{safe_filename}"
+        unique_filename = safe_filename
         filepath = subdir / unique_filename
 
         # Save file

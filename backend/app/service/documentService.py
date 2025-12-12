@@ -4,7 +4,8 @@ from app.db.repository.chunkRepo import ChunkRepository
 from app.db.repository.embeddingRepo import EmbeddingRepository
 
 # from app.service.chunkingService import ChunkingService
-# from app.service.extractionService import ExtractionService
+from app.service.extractionService import ExtractionService
+
 # from app.service.summaryService import SummaryService
 # from app.service.embeddingService import EmbeddingService
 from app.service.fileService import FileService
@@ -33,7 +34,7 @@ class DocumentService:
 
         # Services
         self.file_service = FileService()
-        # self.extraction_service = ExtractionService()
+        self.extraction_service = ExtractionService()
         # self.chunking_service = ChunkingService()
         # self.embedding_service = EmbeddingService()
         # self.summary_service = SummaryService()
@@ -49,13 +50,12 @@ class DocumentService:
         Returns:
             Document: Created document record
         """
-        # Save file to disk
         filepath = await self.file_service.save_upload(file)
 
-        # Create document record
         doc_data = DocumentInCreate(
             file_name=file.filename or "unnamed_file",
-            filepath=filepath,
+            raw_filepath=filepath,
+            markdown_filepath="",
             summary_status=DocumentStatus.IN_PROGRESS,
             created_at=datetime.now(),
             updated_at=datetime.now(),
@@ -63,12 +63,42 @@ class DocumentService:
 
         document = self.doc_repo.create_document(doc_data)
 
-        # Ensure all attributes are loaded before returning
-        # This prevents lazy loading issues when serializing
         _ = document.document_id
         _ = document.file_name
 
         return document
+
+    async def extract_document_markdown(self, document_id: int):
+        document = self.doc_repo.get_document_by_id(document_id)
+        markdown_filepath = self.extraction_service.extract_markdown(document)
+
+        self.doc_repo.update_document(
+            document_id, markdown_filepath=str(markdown_filepath)
+        )
+        return str(markdown_filepath)
+
+    async def chunk_document_markdown(self, document_id: int):
+        pass
+
+    async def process_document_pipeline(self, document_id: int):
+        """
+        Function to process document in the background.
+        1. Retrieve document from table, update status to IN_PROGRESS
+        2. Extract markdown from document
+        3. Chunk markdown, store into chunk table
+        4. Create embeddings, store into embeddings table
+        5. Create summary, store into summary table
+        5. Update document status to complete
+
+        Args:
+            document_id: ID of document to process
+        """
+
+        document = self.doc_repo.get_document_by_id(document_id)
+        if not document:
+            raise ValueError("Document not found")
+
+        markdown_filepath = self.extraction_service.extract_markdown(document)
 
     # async def process_document_pipeline(self, document_id: int):
     #     """
@@ -194,7 +224,7 @@ class DocumentService:
             return False
 
         # Delete physical file
-        self.file_service.delete_file(str(document.filepath))
+        self.file_service.delete_file(str(document.raw_filepath))
 
         # Delete database record (cascades to chunks, embeddings, summaries)
         return self.doc_repo.delete_document(document_id)

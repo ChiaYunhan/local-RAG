@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from app.util.init_db import init_database
 from app.core.database import get_db
 from sqlalchemy.orm import Session
-from app.service.documentService import DocumentService
+from app.service.documentService import DocumentService, ExtractionService
 from app.db.schema.document import DocumentResponse
 
 
@@ -53,4 +53,19 @@ def get_documents(session: Session = Depends(get_db)):
         print(f"Error uploading document: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Error uploading document: {str(e)}"
+        )
+
+
+@app.post("/documents/markdown")
+async def trigger_markdown(document_id: int, session: Session = Depends(get_db)):
+    try:
+        markdown_filepath = await DocumentService(
+            session=session
+        ).extract_document_markdown(document_id)
+        return markdown_filepath
+
+    except Exception as e:
+        print(f"Error triggering markdown generate: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error triggering markdown generate: {str(e)}"
         )

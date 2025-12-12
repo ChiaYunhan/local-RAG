@@ -14,7 +14,8 @@ class DocumentInCreate(BaseModel):
 
     file_name: str
     summary_status: DocumentStatus
-    filepath: str
+    raw_filepath: str
+    markdown_filepath: str
     created_at: datetime
     updated_at: datetime
 
@@ -27,12 +28,6 @@ class DocumentResponse(BaseModel):
     document_id: int
     file_name: str
     summary_status: DocumentStatus
-    filepath: str
+    raw_filepath: str
     created_at: datetime
     updated_at: datetime
-
-
-class DocumentStatusUpdate(BaseModel):
-    """Schema for updating document status"""
-
-    summary_status: DocumentStatus
